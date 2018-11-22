@@ -47,11 +47,13 @@ else
          done
          if [[ $i == $RETRIES ]]; then
            log_info "Download failed, giving up."
+           unset MYSQL_DUMP_SOURCE_USER MYSQL_DUMP_SOURCE_PASSWORD
          else
            # Import the dump
            log_info "Download success, starting import now."
            mysql $mysql_flags $MYSQL_DATABASE < /tmp/${MYSQL_DEPLOY_DUMP} && log_info "Import finished successfully." || log_info "Error on import."
            rm -f /tmp/${MYSQL_DEPLOY_DUMP}
+           unset MYSQL_DUMP_SOURCE_USER MYSQL_DUMP_SOURCE_PASSWORD
          fi
        else
          log_info "${MYSQL_DATABASE}: ${MYSQL_TABLES} tables present"
