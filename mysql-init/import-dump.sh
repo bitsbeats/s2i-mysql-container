@@ -26,7 +26,7 @@ else
        log_info 'No MYSQL_DATABASE specified, we do not know where to import the dump'
      else
        MYSQL_TABLES=`mysql $mysql_flags $MYSQL_DATABASE -N -e 'show tables' 2>&1 | grep -v " Using a password" | wc -l`
-       if [ "${MYSQL_TABLES}" == "0" ] || [ "${MYSQL_FORCE_DEPLOY_DUMP}" = true ]
+       if [ "${MYSQL_TABLES}" == "0" ] || [ "${MYSQL_FORCE_DEPLOY_DUMP}" == "true" ]
        then
          log_info "${MYSQL_DATABASE}: ${MYSQL_TABLES} tables present"
          log_info "env var MYSQL_FORCE_DEPLOY_DUMP set to ${MYSQL_FORCE_DEPLOY_DUMP}"
