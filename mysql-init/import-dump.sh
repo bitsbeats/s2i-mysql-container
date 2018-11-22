@@ -6,9 +6,11 @@
 source ${CONTAINER_SCRIPTS_PATH}/common.sh
 
 ## Vars
-export MYSQL_DEPLOY_DUMP=${MYSQL_DEPLOY_DUMP:-}
-export MYSQL_FORCE_DEPLOY_DUMP=${MYSQL_FORCE_DEPLOY_DUMP:-}
-export MYSQL_DUMP_SOURCE_URL=${MYSQL_DUMP_SOURCE_URL:-}
+MYSQL_DEPLOY_DUMP=${MYSQL_DEPLOY_DUMP:-}
+MYSQL_FORCE_DEPLOY_DUMP=${MYSQL_FORCE_DEPLOY_DUMP:-}
+MYSQL_DUMP_SOURCE_URL=${MYSQL_DUMP_SOURCE_URL:-}
+MYSQL_DUMP_SOURCE_USER=${MYSQL_DUMP_SOURCE_USER:-}
+MYSQL_DUMP_SOURCE_PASSWORD=${MYSQL_DUMP_SOURCE_PASSWORD:-}
 
 
 if [ -z "${MYSQL_DEPLOY_DUMP}" ]
@@ -33,8 +35,15 @@ else
          RETRIES=6
          for ((i=0; i<$RETRIES; i++)); do
            echo "Downloading ${MYSQL_DUMP_SOURCE_URL}/${MYSQL_DEPLOY_DUMP}, attempt $((i+1))/$RETRIES"
-           curl -o /tmp/${MYSQL_DEPLOY_DUMP} ${MYSQL_DUMP_SOURCE_URL}/${MYSQL_DEPLOY_DUMP} && break
-           sleep 10
+           if [ -z "${MYSQL_DUMP_SOURCE_USER}" ]
+           then
+             curl -o /tmp/${MYSQL_DEPLOY_DUMP} ${MYSQL_DUMP_SOURCE_URL}/${MYSQL_DEPLOY_DUMP} && break
+             sleep 10
+           else
+             log_info "HTTPAUTH credentials for MYSQL_DUMP_SOURCE_URL provided going to use them"
+             curl -u "${MYSQL_DUMP_SOURCE_USER}:${MYSQL_DUMP_SOURCE_PASSWORD}" -o /tmp/${MYSQL_DEPLOY_DUMP} ${MYSQL_DUMP_SOURCE_URL}/${MYSQL_DEPLOY_DUMP} && break
+             sleep 10
+           fi
          done
          if [[ $i == $RETRIES ]]; then
            log_info "Download failed, giving up."
@@ -42,6 +51,7 @@ else
            # Import the dump
            log_info "Download success, starting import now."
            mysql $mysql_flags $MYSQL_DATABASE < /tmp/${MYSQL_DEPLOY_DUMP} && log_info "Import finished successfully." || log_info "Error on import."
+           rm -f /tmp/${MYSQL_DEPLOY_DUMP}
          fi
        else
          log_info "${MYSQL_DATABASE}: ${MYSQL_TABLES} tables present"
